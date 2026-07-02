@@ -17,17 +17,17 @@
         &quot;background_color&quot;: &quot;#1e1e24&quot;,
         &quot;theme_color&quot;: &quot;#1e1e24&quot;,
         &quot;icons&quot;: [
-            { &quot;src&quot;: &quot;logo/favicon-192.png&quot;, &quot;sizes&quot;: &quot;192x192&quot;, &quot;type&quot;: &quot;image/png&quot; },
-            { &quot;src&quot;: &quot;logo/favicon-512.png&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot; }
+            { &quot;src&quot;: &quot;logo/logo-black.png&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot;, &quot;purpose&quot;: &quot;any maskable&quot; }
         ]
     }" />
 
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="logo/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="logo/favicon-16.png" />
-    <link rel="apple-touch-icon" href="logo/apple-touch-icon.png" />
+    <!-- Favicons (using your logos) -->
+    <link rel="icon" type="image/png" sizes="512x512" href="logo/logo-black.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="logo/logo-black.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="logo/logo-black.png" />
+    <link rel="apple-touch-icon" href="logo/logo-black.png" />
 
-    <!-- Font Awesome Icons (free, no emojis) -->
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <title>AgentLelosh · Your Personal Agent</title>
@@ -38,7 +38,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* prevent accidental selection while dragging */
+            user-select: none;
         }
 
         body {
@@ -51,7 +51,6 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 16px;
             margin: 0;
-            /* subtle noise texture for depth */
             background-image: radial-gradient(circle at 20% 30%, #1f1f28 1px, transparent 1px);
             background-size: 24px 24px;
         }
@@ -68,9 +67,8 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
             transition: opacity 0.25s ease, transform 0.2s ease;
-            /* will be moved via JS transform */
             will-change: transform, opacity;
-            touch-action: none; /* improve drag on touch devices */
+            touch-action: none;
         }
 
         /* ----- title bar (draggable handle) ----- */
@@ -162,13 +160,33 @@
             background: rgba(255, 255, 255, 0.12);
             color: #b7c9ff;
         }
+        .ctrl-btn.install-btn {
+            background: #2a3f5e;
+            color: #b0c8e8;
+            font-size: 0.8rem;
+            width: auto;
+            padding: 0 12px;
+            gap: 6px;
+            display: none;
+        }
+        .ctrl-btn.install-btn:hover {
+            background: #3a557a;
+            color: #fff;
+        }
+        .ctrl-btn.install-btn.show {
+            display: flex;
+        }
+        @media (display-mode: standalone) {
+            .ctrl-btn.install-btn {
+                display: none !important;
+            }
+        }
 
         /* ----- main content area ----- */
         .window-body {
             padding: 22px 24px 28px;
         }
 
-        /* tagline */
         .tagline {
             display: flex;
             align-items: flex-start;
@@ -194,7 +212,6 @@
             font-weight: 500;
         }
 
-        /* input row */
         .input-group {
             display: flex;
             gap: 10px;
@@ -275,7 +292,6 @@
             transform: scale(0.94);
         }
 
-        /* quick commands */
         .quick-grid {
             display: flex;
             flex-wrap: wrap;
@@ -310,7 +326,6 @@
             transform: scale(0.95);
         }
 
-        /* output area */
         #output {
             background: rgba(0, 0, 0, 0.25);
             backdrop-filter: blur(4px);
@@ -363,7 +378,6 @@
             color: #9ab0d0;
         }
 
-        /* status row */
         .status-row {
             display: flex;
             align-items: center;
@@ -402,7 +416,6 @@
             font-size: 0.75rem;
         }
 
-        /* log */
         #log {
             font-size: 0.72rem;
             color: #5d6b82;
@@ -421,7 +434,6 @@
             margin-right: 6px;
         }
 
-        /* footer */
         .footer {
             margin-top: 16px;
             font-size: 0.7rem;
@@ -430,13 +442,11 @@
             letter-spacing: 0.02em;
         }
 
-        /* transparency override (applied via JS) */
         .window.transparent {
             opacity: 0.25 !important;
             backdrop-filter: blur(2px) saturate(0.6);
         }
 
-        /* hidden state (collapsed) */
         .window.collapsed .window-body,
         .window.collapsed .status-row,
         .window.collapsed .input-group,
@@ -454,7 +464,6 @@
             max-width: 420px;
         }
 
-        /* scroll */
         #log::-webkit-scrollbar {
             width: 3px;
         }
@@ -466,7 +475,6 @@
             border-radius: 20px;
         }
 
-        /* responsive */
         @media (max-width: 520px) {
             .window {
                 border-radius: 20px;
@@ -499,6 +507,11 @@
             .tagline p {
                 font-size: 0.85rem;
             }
+            .ctrl-btn.install-btn {
+                font-size: 0.7rem;
+                padding: 0 10px;
+                width: auto;
+            }
         }
 
         @media (max-width: 400px) {
@@ -513,7 +526,6 @@
             }
         }
 
-        /* drag hint: invisible grab area */
         .title-bar {
             position: relative;
             z-index: 10;
@@ -529,13 +541,16 @@
         <div class="title-bar" id="dragHandle">
             <div class="title-left">
                 <div class="logo-wrapper">
-                    <!-- logo from /logo folder -->
                     <img class="logo-img" src="logo/logo-white.png" alt="AgentLelosh logo" id="logoImg" />
                     <span class="app-name">Agent<span>Lelosh</span></span>
                 </div>
             </div>
 
             <div class="window-controls">
+                <!-- INSTALL BUTTON -->
+                <button class="ctrl-btn install-btn" id="installBtn">
+                    <i class="fas fa-download"></i> Install
+                </button>
                 <!-- opacity toggle -->
                 <button class="ctrl-btn opacity-btn" id="opacityBtn" title="toggle transparency">
                     <i class="fas fa-eye"></i>
@@ -554,31 +569,27 @@
         <!-- BODY -->
         <div class="window-body">
 
-            <!-- tagline -->
             <div class="tagline">
                 <i class="fas fa-bolt"></i>
                 <p>
                     <strong>AgentLelosh</strong> — your personal agent. <br />
-                    No heavy config, just dial a link. I’m on your task while you watch.
+                    No heavy config, just dial a link. I'm on your task while you watch.
                     You command, I execute.
                 </p>
             </div>
 
-            <!-- status -->
             <div class="status-row">
                 <span class="status-dot" id="statusDot"></span>
                 <span id="statusText">Ready</span>
                 <span id="voiceIndicator"><i class="fas fa-microphone" style="margin-right:4px;"></i> tap mic</span>
             </div>
 
-            <!-- input -->
             <div class="input-group">
                 <input type="text" id="commandInput" placeholder='e.g. "play Shape of You"' autofocus />
                 <button class="btn btn-primary" id="executeBtn"><i class="fas fa-play"></i> Run</button>
                 <button class="btn btn-voice" id="voiceBtn"><i class="fas fa-microphone"></i></button>
             </div>
 
-            <!-- quick commands -->
             <div class="quick-grid">
                 <button class="quick-btn" data-cmd="play Shape of You"><i class="fas fa-music"></i> Shape of You</button>
                 <button class="quick-btn" data-cmd="play Billie Jean"><i class="fas fa-music"></i> Billie Jean</button>
@@ -589,13 +600,11 @@
                 <button class="quick-btn" data-cmd="help"><i class="fas fa-question-circle"></i> Help</button>
             </div>
 
-            <!-- output -->
             <div id="output">
                 <i class="fas fa-comment-dots"></i> Ready for your command.
                 <br /><span class="status-badge badge-info">online</span>
             </div>
 
-            <!-- log -->
             <div id="log"></div>
 
             <div class="footer">
@@ -623,11 +632,55 @@
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             const voiceIndicator = document.getElementById('voiceIndicator');
-
-            // controls
+            const installBtn = document.getElementById('installBtn');
             const opacityBtn = document.getElementById('opacityBtn');
             const collapseBtn = document.getElementById('collapseBtn');
             const closeBtn = document.getElementById('closeBtn');
+
+            // ---- PWA Install ----
+            let deferredPrompt = null;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installBtn.classList.add('show');
+                installBtn.style.display = 'flex';
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    if (result.outcome === 'accepted') {
+                        addLog('✅ App installed!', 'success');
+                        installBtn.classList.remove('show');
+                        installBtn.style.display = 'none';
+                    } else {
+                        addLog('❌ Installation declined', 'error');
+                    }
+                    deferredPrompt = null;
+                } else {
+                    setOutput('📲 On Android: Tap the 3-dot menu → "Install app" or "Add to Home Screen"', 'info');
+                    addLog('📲 Use "Add to Home Screen" from browser menu', 'info');
+                }
+            });
+
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                installBtn.classList.remove('show');
+                installBtn.style.display = 'none';
+            }
+
+            // ---- Service Worker Registration ----
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(() => {
+                        addLog('✅ Service Worker registered', 'success');
+                    })
+                    .catch((err) => {
+                        console.warn('SW registration failed:', err);
+                        addLog('⚠️ Service Worker not available', 'info');
+                    });
+            }
 
             // ---- state ----
             let isListening = false;
@@ -639,15 +692,13 @@
 
             // ---- drag state ----
             let isDragging = false;
-            let startX = 0,
-                startY = 0;
             let offsetX = 0,
                 offsetY = 0;
             let windowX = 0,
                 windowY = 0;
             let hasMoved = false;
 
-            // ---- window controls: opacity ----
+            // ---- window controls ----
             opacityBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 windowEl.classList.toggle('transparent');
@@ -659,7 +710,6 @@
                 addLog(isTransparent ? '🔲 transparency on' : '🔳 transparency off', 'info');
             });
 
-            // ---- collapse / expand ----
             collapseBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 windowEl.classList.toggle('collapsed');
@@ -670,7 +720,6 @@
                 addLog(isCollapsed ? '📦 collapsed' : '📂 expanded', 'info');
             });
 
-            // ---- close = reset position ----
             closeBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 windowEl.style.transform = 'translate(0, 0)';
@@ -680,22 +729,16 @@
                 setOutput('↺ Window position reset', 'info');
             });
 
-            // ============================================================
-            //  DRAG (works on desktop + touch)
-            // ============================================================
+            // ---- DRAG ----
             function onDragStart(e) {
                 const target = e.target.closest('.ctrl-btn');
-                if (target) return; // let buttons work
-
+                if (target) return;
                 isDragging = true;
                 hasMoved = false;
                 const rect = windowEl.getBoundingClientRect();
-
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
                 if (clientX == null) return;
-
-                // current translate values
                 const style = window.getComputedStyle(windowEl);
                 const matrix = style.transform;
                 if (matrix !== 'none') {
@@ -708,15 +751,12 @@
                         }
                     }
                 }
-
                 offsetX = clientX - rect.left - windowX;
                 offsetY = clientY - rect.top - windowY;
-
                 document.addEventListener('mousemove', onDragMove);
                 document.addEventListener('mouseup', onDragEnd);
                 document.addEventListener('touchmove', onDragMove, { passive: false });
                 document.addEventListener('touchend', onDragEnd, { passive: false });
-
                 e.preventDefault && e.preventDefault();
             }
 
@@ -725,11 +765,8 @@
                 const clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
                 if (clientX == null) return;
-
                 let newX = clientX - offsetX;
                 let newY = clientY - offsetY;
-
-                // boundary clamp (optional) – keep inside viewport
                 const rect = windowEl.getBoundingClientRect();
                 const winW = window.innerWidth;
                 const winH = window.innerHeight;
@@ -737,7 +774,6 @@
                 const h = rect.height;
                 newX = Math.max(-w + 40, Math.min(winW - 40, newX));
                 newY = Math.max(-h + 40, Math.min(winH - 40, newY));
-
                 windowX = newX;
                 windowY = newY;
                 windowEl.style.transform = `translate(${newX}px, ${newY}px)`;
@@ -752,23 +788,15 @@
                     document.removeEventListener('mouseup', onDragEnd);
                     document.removeEventListener('touchmove', onDragMove);
                     document.removeEventListener('touchend', onDragEnd);
-                    if (!hasMoved) {
-                        // if no movement, treat as click on input? we let input handle it.
-                    }
                 }
             }
 
             dragHandle.addEventListener('mousedown', onDragStart);
             dragHandle.addEventListener('touchstart', onDragStart, { passive: false });
-
-            // ---- prevent drag from stealing focus from input ----
             commandInput.addEventListener('mousedown', (e) => e.stopPropagation());
             commandInput.addEventListener('touchstart', (e) => e.stopPropagation());
 
-            // ============================================================
-            //  CORE LOGIC (voice, commands, etc.) – same as before, with personality
-            // ============================================================
-
+            // ---- CORE LOGIC ----
             function addLog(message, type = 'info') {
                 const time = new Date().toLocaleTimeString();
                 const div = document.createElement('div');
@@ -800,7 +828,6 @@
 
             function setOutput(message, type = 'info') {
                 output.innerHTML = '';
-                // preserve leading icon if any
                 const icon = type === 'success' ? 'fa-check-circle' :
                     type === 'error' ? 'fa-exclamation-circle' : 'fa-comment-dots';
                 const iconHtml = `<i class="fas ${icon}" style="margin-right:8px;"></i>`;
@@ -809,8 +836,6 @@
                 if (type === 'success') output.classList.add('output-success');
                 else if (type === 'error') output.classList.add('output-error');
                 else output.classList.add('output-info');
-
-                // badge
                 const badge = document.createElement('span');
                 badge.className = 'status-badge';
                 if (type === 'success') {
@@ -839,7 +864,6 @@
                 } catch (e) { /* ignore */ }
             }
 
-            // ---- play music with auto-play attempt ----
             function playMusic(song) {
                 if (!song) {
                     setOutput('Please specify a song name.', 'error');
@@ -861,28 +885,23 @@
                 }
             }
 
-            // ---- command processor ----
             function processCommand(text) {
                 const cmd = text.trim();
                 if (!cmd) {
                     setOutput('Please type or speak a command.', 'info');
                     return;
                 }
-
                 addLog(`▶ executing: "${cmd}"`, 'info');
                 setOutput(`⏳ processing: "${cmd}"`, 'info');
                 setStatus('processing...', 'active');
-
                 const lower = cmd.toLowerCase();
 
-                // 1. play music
                 const playMatch = cmd.match(/^(?:play|listen to)\s+(.+)$/i);
                 if (playMatch) {
                     const song = playMatch[1].trim();
                     if (song) { playMusic(song); return; }
                 }
 
-                // 2. open site
                 const openMatch = cmd.match(/^open\s+(\w+)$/i);
                 if (openMatch) {
                     const site = openMatch[1].toLowerCase();
@@ -922,7 +941,6 @@
                     }
                 }
 
-                // 3. fill form
                 const fillMatch = cmd.match(/fill\s+(\w+)\s+with\s+(.+)/i);
                 if (fillMatch) {
                     const field = fillMatch[1].trim();
@@ -941,7 +959,6 @@
                     return;
                 }
 
-                // 4. video controls
                 if (lower.includes('pause') && !lower.includes('resume')) {
                     const result = controlVideo('pause');
                     setOutput(result.message, result.success ? 'success' : 'error');
@@ -959,7 +976,6 @@
                     return;
                 }
 
-                // 5. search
                 const searchMatch = cmd.match(/^(?:search|google)\s+(.+)/i);
                 if (searchMatch) {
                     const query = encodeURIComponent(searchMatch[1].trim());
@@ -971,7 +987,6 @@
                     return;
                 }
 
-                // 6. help
                 if (lower.includes('help') || cmd === '?') {
                     setOutput(
                         `📖 available commands:\n` +
@@ -989,7 +1004,6 @@
                     return;
                 }
 
-                // 7. scroll
                 if (lower === 'scroll down') { window.scrollBy(0, 300);
                     setOutput('⬇️ scrolled down', 'success');
                     speak('Scrolling down');
@@ -1007,7 +1021,6 @@
                     speak('Scrolled to bottom');
                     addLog('⬇️ scrolled bottom', 'success'); return; }
 
-                // fallback
                 const msg = `🤔 unknown command: "${cmd}". Type "help" for commands.`;
                 setOutput(msg, 'error');
                 speak('I didn\'t understand that command');
@@ -1015,7 +1028,6 @@
                 setStatus('unknown', 'idle');
             }
 
-            // ---- helpers: fill, video, click ----
             function fillFormField(fieldName, value) {
                 const selectors = [
                     `input[name="${fieldName}"]`,
@@ -1060,7 +1072,7 @@
                 return { success: true, message: `✅ ${action === 'play' ? 'resumed' : 'paused'} ${videos.length} video(s)` };
             }
 
-            // ---- voice recognition (same as before) ----
+            // ---- voice recognition ----
             function initVoice() {
                 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SR) {
@@ -1221,7 +1233,6 @@
             setStatus('ready', 'idle');
             setOutput('💬 AgentLelosh ready. Type or tap mic.', 'info');
 
-            // expose API
             window.__agent = {
                 execute: processCommand,
                 play: playMusic,
@@ -1230,7 +1241,6 @@
                 voice: toggleVoice
             };
 
-            // auto-run from URL ?cmd=...
             const params = new URLSearchParams(window.location.search);
             const cmdParam = params.get('cmd');
             if (cmdParam) {
@@ -1240,7 +1250,6 @@
                 }, 800);
             }
 
-            // pause voice on background
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden && isListening && recognition) {
                     try { recognition._canceled = true;
