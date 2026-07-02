@@ -80,7 +80,6 @@ Install me as a **PWA** for a native app experience – tap the *Install* button
 1. Clone the repo:
    ```bash
    git clone https://github.com/suryasticsai/AgentLelosh.git
-```
 
 2. Place your logo files in /logo (reference them in the HTML).
 3. Open index.html in your browser.
