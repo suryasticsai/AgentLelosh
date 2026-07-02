@@ -1,0 +1,17 @@
+{
+  "name": "AgentLelosh",
+  "short_name": "AgentLelosh",
+  "description": "Your Personal Voice Agent",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1e1e24",
+  "theme_color": "#1e1e24",
+  "icons": [
+    {
+      "src": "logo/logo-black.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
