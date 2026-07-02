@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1e1e24" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- PWA Manifest (inline) -->
+    <link rel="manifest" href="data:application/json,{
+        &quot;name&quot;: &quot;AgentLelosh&quot;,
+        &quot;short_name&quot;: &quot;AgentLelosh&quot;,
+        &quot;description&quot;: &quot;Your Personal Voice Agent&quot;,
+        &quot;start_url&quot;: &quot;.&quot;,
+        &quot;display&quot;: &quot;standalone&quot;,
+        &quot;background_color&quot;: &quot;#1e1e24&quot;,
+        &quot;theme_color&quot;: &quot;#1e1e24&quot;,
+        &quot;icons&quot;: [
+            { &quot;src&quot;: &quot;logo/favicon-192.png&quot;, &quot;sizes&quot;: &quot;192x192&quot;, &quot;type&quot;: &quot;image/png&quot; },
+            { &quot;src&quot;: &quot;logo/favicon-512.png&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/png&quot; }
+        ]
+    }" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="logo/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="logo/favicon-16.png" />
+    <link rel="apple-touch-icon" href="logo/apple-touch-icon.png" />
+
+    <!-- Font Awesome Icons (free, no emojis) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <title>AgentLelosh · Your Personal Agent</title>
+
+    <style>
+        /* ----- global reset & base ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* prevent accidental selection while dragging */
+        }
+
+        body {
+            background: #121216;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            margin: 0;
+            /* subtle noise texture for depth */
+            background-image: radial-gradient(circle at 20% 30%, #1f1f28 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* ----- draggable window (glass‑morphism) ----- */
+        .window {
+            position: relative;
+            width: 100%;
+            max-width: 680px;
+            background: rgba(30, 30, 36, 0.72);
+            backdrop-filter: blur(16px) saturate(1.1);
+            -webkit-backdrop-filter: blur(16px) saturate(1.1);
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            transition: opacity 0.25s ease, transform 0.2s ease;
+            /* will be moved via JS transform */
+            will-change: transform, opacity;
+            touch-action: none; /* improve drag on touch devices */
+        }
+
+        /* ----- title bar (draggable handle) ----- */
+        .title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px 10px 20px;
+            cursor: grab;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            touch-action: none;
+        }
+        .title-bar:active {
+            cursor: grabbing;
+        }
+
+        .title-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-img {
+            height: 38px;
+            width: 38px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 2px;
+            flex-shrink: 0;
+        }
+
+        .app-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: #f0f2f5;
+            white-space: nowrap;
+        }
+        .app-name span {
+            font-weight: 300;
+            color: #8b93a5;
+            margin-left: 2px;
+        }
+
+        /* window controls */
+        .window-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .ctrl-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 40px;
+            border: none;
+            background: rgba(255, 255, 255, 0.04);
+            color: #bcc3d1;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+            touch-action: manipulation;
+        }
+        .ctrl-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+        .ctrl-btn:active {
+            transform: scale(0.92);
+        }
+
+        .ctrl-btn.close:hover {
+            background: #e74c5e;
+            color: #fff;
+        }
+        .ctrl-btn.opacity-btn.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: #b7c9ff;
+        }
+
+        /* ----- main content area ----- */
+        .window-body {
+            padding: 22px 24px 28px;
+        }
+
+        /* tagline */
+        .tagline {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 22px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .tagline i {
+            color: #7d879b;
+            font-size: 1.1rem;
+            margin-top: 3px;
+        }
+        .tagline p {
+            font-size: 0.96rem;
+            line-height: 1.5;
+            color: #c9d0dc;
+            font-weight: 350;
+            letter-spacing: 0.01em;
+        }
+        .tagline strong {
+            color: #eef2f7;
+            font-weight: 500;
+        }
+
+        /* input row */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        #commandInput {
+            flex: 1;
+            padding: 0.9rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            color: #f0f2f5;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            min-width: 140px;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+        #commandInput::placeholder {
+            color: #6b758b;
+            font-weight: 300;
+        }
+        #commandInput:focus {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+        }
+
+        .btn {
+            padding: 0.9rem 1.4rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: #d3dae8;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            touch-action: manipulation;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: #ffffff;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary {
+            background: #3b445a;
+            color: #f0f2f5;
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .btn-primary:hover {
+            background: #4d576f;
+        }
+
+        .btn-voice {
+            background: #2a313f;
+            color: #bcc6d9;
+            min-width: 52px;
+            justify-content: center;
+        }
+        .btn-voice.listening {
+            background: #b34a5a;
+            color: #fff;
+            box-shadow: 0 0 0 2px rgba(200, 70, 90, 0.3);
+        }
+        .btn-voice:active {
+            transform: scale(0.94);
+        }
+
+        /* quick commands */
+        .quick-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .quick-btn {
+            padding: 0.45rem 1rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.02);
+            color: #9ea9be;
+            font-size: 0.78rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+            touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 0.01em;
+        }
+        .quick-btn i {
+            font-size: 0.7rem;
+            color: #6b7a94;
+        }
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #d9e0ed;
+        }
+        .quick-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* output area */
+        #output {
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(4px);
+            border-radius: 18px;
+            padding: 1.2rem 1.4rem;
+            min-height: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #d3dae8;
+            white-space: pre-wrap;
+            word-break: break-word;
+            transition: border-color 0.2s;
+            margin-bottom: 16px;
+        }
+        #output i {
+            color: #7d8aa3;
+            margin-right: 6px;
+        }
+        .output-success {
+            border-color: rgba(120, 200, 150, 0.2);
+        }
+        .output-error {
+            border-color: rgba(200, 80, 90, 0.2);
+        }
+        .output-info {
+            border-color: rgba(120, 160, 220, 0.15);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.1rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-top: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #8893aa;
+        }
+        .badge-success {
+            background: rgba(80, 180, 130, 0.12);
+            color: #80c8a0;
+        }
+        .badge-error {
+            background: rgba(200, 80, 90, 0.10);
+            color: #d48a94;
+        }
+        .badge-info {
+            background: rgba(100, 140, 200, 0.08);
+            color: #9ab0d0;
+        }
+
+        /* status row */
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.4rem 0.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 60px;
+            font-size: 0.8rem;
+            color: #8893aa;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3d4557;
+            transition: background 0.25s;
+        }
+        .status-dot.active {
+            background: #80b8a0;
+            box-shadow: 0 0 8px rgba(80, 180, 130, 0.2);
+        }
+        .status-dot.listening {
+            background: #d4a050;
+            box-shadow: 0 0 12px rgba(200, 160, 60, 0.2);
+        }
+        .status-dot.error {
+            background: #c07a82;
+            box-shadow: 0 0 8px rgba(200, 80, 90, 0.15);
+        }
+        #voiceIndicator {
+            margin-left: auto;
+            opacity: 0.5;
+            font-size: 0.75rem;
+        }
+
+        /* log */
+        #log {
+            font-size: 0.72rem;
+            color: #5d6b82;
+            max-height: 70px;
+            overflow-y: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            padding-top: 10px;
+            margin-top: 6px;
+        }
+        #log div {
+            padding: 0.1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        #log .log-time {
+            color: #5d6f8a;
+            margin-right: 6px;
+        }
+
+        /* footer */
+        .footer {
+            margin-top: 16px;
+            font-size: 0.7rem;
+            color: #4d586d;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+
+        /* transparency override (applied via JS) */
+        .window.transparent {
+            opacity: 0.25 !important;
+            backdrop-filter: blur(2px) saturate(0.6);
+        }
+
+        /* hidden state (collapsed) */
+        .window.collapsed .window-body,
+        .window.collapsed .status-row,
+        .window.collapsed .input-group,
+        .window.collapsed .quick-grid,
+        .window.collapsed #output,
+        .window.collapsed #log,
+        .window.collapsed .footer {
+            display: none !important;
+        }
+        .window.collapsed .title-bar {
+            border-bottom: none;
+            padding-bottom: 12px;
+        }
+        .window.collapsed {
+            max-width: 420px;
+        }
+
+        /* scroll */
+        #log::-webkit-scrollbar {
+            width: 3px;
+        }
+        #log::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #log::-webkit-scrollbar-thumb {
+            background: #2f384b;
+            border-radius: 20px;
+        }
+
+        /* responsive */
+        @media (max-width: 520px) {
+            .window {
+                border-radius: 20px;
+            }
+            .window-body {
+                padding: 16px 16px 20px;
+            }
+            .title-bar {
+                padding: 10px 14px 8px 16px;
+            }
+            .app-name {
+                font-size: 1rem;
+            }
+            .logo-img {
+                height: 32px;
+                width: 32px;
+            }
+            .btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.85rem;
+            }
+            #commandInput {
+                padding: 0.7rem 1rem;
+                font-size: 0.9rem;
+            }
+            .quick-btn {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.7rem;
+            }
+            .tagline p {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .window-body {
+                padding: 12px 10px 16px;
+            }
+            .input-group {
+                gap: 6px;
+            }
+            .btn-voice {
+                min-width: 44px;
+            }
+        }
+
+        /* drag hint: invisible grab area */
+        .title-bar {
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== DRAGGABLE WINDOW ===== -->
+    <div class="window" id="agentWindow">
+
+        <!-- TITLE BAR (drag handle) -->
+        <div class="title-bar" id="dragHandle">
+            <div class="title-left">
+                <div class="logo-wrapper">
+                    <!-- logo from /logo folder -->
+                    <img class="logo-img" src="logo/logo-white.png" alt="AgentLelosh logo" id="logoImg" />
+                    <span class="app-name">Agent<span>Lelosh</span></span>
+                </div>
+            </div>
+
+            <div class="window-controls">
+                <!-- opacity toggle -->
+                <button class="ctrl-btn opacity-btn" id="opacityBtn" title="toggle transparency">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <!-- collapse / expand -->
+                <button class="ctrl-btn" id="collapseBtn" title="collapse / expand">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <!-- close (reset position) -->
+                <button class="ctrl-btn close" id="closeBtn" title="reset position">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- BODY -->
+        <div class="window-body">
+
+            <!-- tagline -->
+            <div class="tagline">
+                <i class="fas fa-bolt"></i>
+                <p>
+                    <strong>AgentLelosh</strong> — your personal agent. <br />
+                    No heavy config, just dial a link. I’m on your task while you watch.
+                    You command, I execute.
+                </p>
+            </div>
+
+            <!-- status -->
+            <div class="status-row">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Ready</span>
+                <span id="voiceIndicator"><i class="fas fa-microphone" style="margin-right:4px;"></i> tap mic</span>
+            </div>
+
+            <!-- input -->
+            <div class="input-group">
+                <input type="text" id="commandInput" placeholder='e.g. "play Shape of You"' autofocus />
+                <button class="btn btn-primary" id="executeBtn"><i class="fas fa-play"></i> Run</button>
+                <button class="btn btn-voice" id="voiceBtn"><i class="fas fa-microphone"></i></button>
+            </div>
+
+            <!-- quick commands -->
+            <div class="quick-grid">
+                <button class="quick-btn" data-cmd="play Shape of You"><i class="fas fa-music"></i> Shape of You</button>
+                <button class="quick-btn" data-cmd="play Billie Jean"><i class="fas fa-music"></i> Billie Jean</button>
+                <button class="quick-btn" data-cmd="pause"><i class="fas fa-pause"></i> Pause</button>
+                <button class="quick-btn" data-cmd="resume"><i class="fas fa-play"></i> Resume</button>
+                <button class="quick-btn" data-cmd="fill email with demo@test.com"><i class="fas fa-pen"></i> Fill email</button>
+                <button class="quick-btn" data-cmd="open youtube"><i class="fas fa-globe"></i> YouTube</button>
+                <button class="quick-btn" data-cmd="help"><i class="fas fa-question-circle"></i> Help</button>
+            </div>
+
+            <!-- output -->
+            <div id="output">
+                <i class="fas fa-comment-dots"></i> Ready for your command.
+                <br /><span class="status-badge badge-info">online</span>
+            </div>
+
+            <!-- log -->
+            <div id="log"></div>
+
+            <div class="footer">
+                <i class="fas fa-circle" style="font-size:0.4rem; vertical-align:middle; margin-right:6px; color:#4d586d;"></i>
+                AgentLelosh · always listening
+            </div>
+        </div>
+        <!-- /window-body -->
+    </div>
+    <!-- /window -->
+
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ---- DOM refs ----
+            const windowEl = document.getElementById('agentWindow');
+            const dragHandle = document.getElementById('dragHandle');
+            const commandInput = document.getElementById('commandInput');
+            const executeBtn = document.getElementById('executeBtn');
+            const voiceBtn = document.getElementById('voiceBtn');
+            const output = document.getElementById('output');
+            const logContainer = document.getElementById('log');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const voiceIndicator = document.getElementById('voiceIndicator');
+
+            // controls
+            const opacityBtn = document.getElementById('opacityBtn');
+            const collapseBtn = document.getElementById('collapseBtn');
+            const closeBtn = document.getElementById('closeBtn');
+
+            // ---- state ----
+            let isListening = false;
+            let recognition = null;
+            let isVoiceSupported = false;
+            let isAndroid = /android/i.test(navigator.userAgent);
+            let retryCount = 0;
+            const MAX_RETRIES = 3;
+
+            // ---- drag state ----
+            let isDragging = false;
+            let startX = 0,
+                startY = 0;
+            let offsetX = 0,
+                offsetY = 0;
+            let windowX = 0,
+                windowY = 0;
+            let hasMoved = false;
+
+            // ---- window controls: opacity ----
+            opacityBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                windowEl.classList.toggle('transparent');
+                this.classList.toggle('active');
+                const isTransparent = windowEl.classList.contains('transparent');
+                this.innerHTML = isTransparent ?
+                    '<i class="fas fa-eye-slash"></i>' :
+                    '<i class="fas fa-eye"></i>';
+                addLog(isTransparent ? '🔲 transparency on' : '🔳 transparency off', 'info');
+            });
+
+            // ---- collapse / expand ----
+            collapseBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                windowEl.classList.toggle('collapsed');
+                const isCollapsed = windowEl.classList.contains('collapsed');
+                this.innerHTML = isCollapsed ?
+                    '<i class="fas fa-plus"></i>' :
+                    '<i class="fas fa-minus"></i>';
+                addLog(isCollapsed ? '📦 collapsed' : '📂 expanded', 'info');
+            });
+
+            // ---- close = reset position ----
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                windowEl.style.transform = 'translate(0, 0)';
+                windowX = 0;
+                windowY = 0;
+                addLog('↺ position reset', 'info');
+                setOutput('↺ Window position reset', 'info');
+            });
+
+            // ============================================================
+            //  DRAG (works on desktop + touch)
+            // ============================================================
+            function onDragStart(e) {
+                const target = e.target.closest('.ctrl-btn');
+                if (target) return; // let buttons work
+
+                isDragging = true;
+                hasMoved = false;
+                const rect = windowEl.getBoundingClientRect();
+
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (clientX == null) return;
+
+                // current translate values
+                const style = window.getComputedStyle(windowEl);
+                const matrix = style.transform;
+                if (matrix !== 'none') {
+                    const values = matrix.match(/matrix.*\((.+)\)/);
+                    if (values) {
+                        const nums = values[1].split(', ').map(Number);
+                        if (nums.length === 6) {
+                            windowX = nums[4] || 0;
+                            windowY = nums[5] || 0;
+                        }
+                    }
+                }
+
+                offsetX = clientX - rect.left - windowX;
+                offsetY = clientY - rect.top - windowY;
+
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd);
+                document.addEventListener('touchmove', onDragMove, { passive: false });
+                document.addEventListener('touchend', onDragEnd, { passive: false });
+
+                e.preventDefault && e.preventDefault();
+            }
+
+            function onDragMove(e) {
+                if (!isDragging) return;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (clientX == null) return;
+
+                let newX = clientX - offsetX;
+                let newY = clientY - offsetY;
+
+                // boundary clamp (optional) – keep inside viewport
+                const rect = windowEl.getBoundingClientRect();
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
+                const w = rect.width;
+                const h = rect.height;
+                newX = Math.max(-w + 40, Math.min(winW - 40, newX));
+                newY = Math.max(-h + 40, Math.min(winH - 40, newY));
+
+                windowX = newX;
+                windowY = newY;
+                windowEl.style.transform = `translate(${newX}px, ${newY}px)`;
+                hasMoved = true;
+                e.preventDefault && e.preventDefault();
+            }
+
+            function onDragEnd(e) {
+                if (isDragging) {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', onDragMove);
+                    document.removeEventListener('mouseup', onDragEnd);
+                    document.removeEventListener('touchmove', onDragMove);
+                    document.removeEventListener('touchend', onDragEnd);
+                    if (!hasMoved) {
+                        // if no movement, treat as click on input? we let input handle it.
+                    }
+                }
+            }
+
+            dragHandle.addEventListener('mousedown', onDragStart);
+            dragHandle.addEventListener('touchstart', onDragStart, { passive: false });
+
+            // ---- prevent drag from stealing focus from input ----
+            commandInput.addEventListener('mousedown', (e) => e.stopPropagation());
+            commandInput.addEventListener('touchstart', (e) => e.stopPropagation());
+
+            // ============================================================
+            //  CORE LOGIC (voice, commands, etc.) – same as before, with personality
+            // ============================================================
+
+            function addLog(message, type = 'info') {
+                const time = new Date().toLocaleTimeString();
+                const div = document.createElement('div');
+                const color = type === 'error' ? '#c07a82' :
+                    type === 'success' ? '#80b8a0' : '#6b7a94';
+                div.innerHTML = `<span class="log-time">[${time}]</span> <span style="color:${color}">${message}</span>`;
+                logContainer.prepend(div);
+                if (logContainer.children.length > 50) {
+                    logContainer.removeChild(logContainer.lastChild);
+                }
+            }
+
+            function setStatus(text, state = 'idle') {
+                statusText.textContent = text;
+                statusDot.className = 'status-dot';
+                if (state === 'listening') {
+                    statusDot.classList.add('listening');
+                    voiceIndicator.innerHTML = '<i class="fas fa-microphone" style="margin-right:4px;"></i> listening...';
+                } else if (state === 'active') {
+                    statusDot.classList.add('active');
+                    voiceIndicator.innerHTML = '<i class="fas fa-microphone" style="margin-right:4px;"></i> tap mic';
+                } else if (state === 'error') {
+                    statusDot.classList.add('error');
+                    voiceIndicator.innerHTML = '<i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i> voice error';
+                } else {
+                    voiceIndicator.innerHTML = '<i class="fas fa-microphone" style="margin-right:4px;"></i> tap mic';
+                }
+            }
+
+            function setOutput(message, type = 'info') {
+                output.innerHTML = '';
+                // preserve leading icon if any
+                const icon = type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' : 'fa-comment-dots';
+                const iconHtml = `<i class="fas ${icon}" style="margin-right:8px;"></i>`;
+                output.innerHTML = iconHtml + message;
+                output.className = '';
+                if (type === 'success') output.classList.add('output-success');
+                else if (type === 'error') output.classList.add('output-error');
+                else output.classList.add('output-info');
+
+                // badge
+                const badge = document.createElement('span');
+                badge.className = 'status-badge';
+                if (type === 'success') {
+                    badge.className += ' badge-success';
+                    badge.textContent = '✓ done';
+                } else if (type === 'error') {
+                    badge.className += ' badge-error';
+                    badge.textContent = '✗ error';
+                } else {
+                    badge.className += ' badge-info';
+                    badge.textContent = '⏺ info';
+                }
+                output.appendChild(document.createElement('br'));
+                output.appendChild(badge);
+            }
+
+            function speak(text) {
+                if (!('speechSynthesis' in window)) return;
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1;
+                    window.speechSynthesis.speak(utterance);
+                } catch (e) { /* ignore */ }
+            }
+
+            // ---- play music with auto-play attempt ----
+            function playMusic(song) {
+                if (!song) {
+                    setOutput('Please specify a song name.', 'error');
+                    return;
+                }
+                addLog(`🎵 playing: "${song}"`, 'info');
+                setOutput(`Opening "${song}" on YouTube...`, 'info');
+                const query = encodeURIComponent(song + ' audio');
+                const url = `https://www.youtube.com/results?search_query=${query}`;
+                const newWindow = window.open(url, '_blank');
+                if (newWindow) {
+                    setOutput(`▶️ Playing "${song}" on YouTube`, 'success');
+                    speak(`Playing ${song}`);
+                    addLog(`✅ playing "${song}"`, 'success');
+                    setStatus('playing music', 'active');
+                } else {
+                    setOutput(`⚠️ Popup blocked – opening in same tab.`, 'info');
+                    window.location.href = url;
+                }
+            }
+
+            // ---- command processor ----
+            function processCommand(text) {
+                const cmd = text.trim();
+                if (!cmd) {
+                    setOutput('Please type or speak a command.', 'info');
+                    return;
+                }
+
+                addLog(`▶ executing: "${cmd}"`, 'info');
+                setOutput(`⏳ processing: "${cmd}"`, 'info');
+                setStatus('processing...', 'active');
+
+                const lower = cmd.toLowerCase();
+
+                // 1. play music
+                const playMatch = cmd.match(/^(?:play|listen to)\s+(.+)$/i);
+                if (playMatch) {
+                    const song = playMatch[1].trim();
+                    if (song) { playMusic(song); return; }
+                }
+
+                // 2. open site
+                const openMatch = cmd.match(/^open\s+(\w+)$/i);
+                if (openMatch) {
+                    const site = openMatch[1].toLowerCase();
+                    const urls = {
+                        'youtube': 'https://youtube.com',
+                        'google': 'https://google.com',
+                        'github': 'https://github.com',
+                        'gmail': 'https://gmail.com',
+                        'twitter': 'https://twitter.com',
+                        'x': 'https://x.com',
+                        'reddit': 'https://reddit.com',
+                        'facebook': 'https://facebook.com',
+                        'instagram': 'https://instagram.com',
+                        'linkedin': 'https://linkedin.com',
+                        'medium': 'https://medium.com',
+                        'huggingface': 'https://huggingface.co',
+                        'spotify': 'https://spotify.com',
+                        'netflix': 'https://netflix.com',
+                        'amazon': 'https://amazon.com',
+                        'wikipedia': 'https://wikipedia.org'
+                    };
+                    if (urls[site]) {
+                        window.open(urls[site], '_blank');
+                        setOutput(`🌐 opened ${site}`, 'success');
+                        speak(`Opening ${site}`);
+                        addLog(`✅ opened ${site}`, 'success');
+                        setStatus('opened ' + site, 'active');
+                        return;
+                    } else {
+                        try {
+                            window.open('https://' + site + '.com', '_blank');
+                            setOutput(`🌐 opened ${site}.com`, 'success');
+                            speak(`Opening ${site}`);
+                            addLog(`✅ opened ${site}.com`, 'success');
+                            return;
+                        } catch (e) {}
+                    }
+                }
+
+                // 3. fill form
+                const fillMatch = cmd.match(/fill\s+(\w+)\s+with\s+(.+)/i);
+                if (fillMatch) {
+                    const field = fillMatch[1].trim();
+                    const value = fillMatch[2].trim();
+                    const result = fillFormField(field, value);
+                    if (result.success) {
+                        setOutput(`✅ filled "${field}" with "${value}"`, 'success');
+                        speak(`Filled ${field}`);
+                        addLog(`✅ filled field "${field}"`, 'success');
+                        setStatus('form filled', 'active');
+                    } else {
+                        setOutput(`⚠️ ${result.message}`, 'error');
+                        speak(`Could not find field ${field}`);
+                        addLog(`❌ ${result.message}`, 'error');
+                    }
+                    return;
+                }
+
+                // 4. video controls
+                if (lower.includes('pause') && !lower.includes('resume')) {
+                    const result = controlVideo('pause');
+                    setOutput(result.message, result.success ? 'success' : 'error');
+                    if (result.success) { speak('Paused');
+                        addLog('⏸️ paused video', 'success');
+                        setStatus('paused', 'active'); } else { addLog('❌ no video found', 'error'); }
+                    return;
+                }
+                if (lower.includes('resume') || (lower.includes('play') && lower.includes('video'))) {
+                    const result = controlVideo('play');
+                    setOutput(result.message, result.success ? 'success' : 'error');
+                    if (result.success) { speak('Resumed');
+                        addLog('▶️ resumed video', 'success');
+                        setStatus('resumed', 'active'); } else { addLog('❌ no video found', 'error'); }
+                    return;
+                }
+
+                // 5. search
+                const searchMatch = cmd.match(/^(?:search|google)\s+(.+)/i);
+                if (searchMatch) {
+                    const query = encodeURIComponent(searchMatch[1].trim());
+                    window.open('https://www.google.com/search?q=' + query, '_blank');
+                    setOutput(`🔍 searching "${searchMatch[1].trim()}"`, 'success');
+                    speak(`Searching for ${searchMatch[1].trim()}`);
+                    addLog(`✅ searched: "${searchMatch[1].trim()}"`, 'success');
+                    setStatus('searched', 'active');
+                    return;
+                }
+
+                // 6. help
+                if (lower.includes('help') || cmd === '?') {
+                    setOutput(
+                        `📖 available commands:\n` +
+                        `• "play [song]" – open & auto-play YouTube\n` +
+                        `• "open [site]" – youtube, google, github, etc.\n` +
+                        `• "fill [field] with [value]" – fill form fields\n` +
+                        `• "pause" / "resume" – control video\n` +
+                        `• "search [query]" – Google search\n` +
+                        `• "help" – show this message`,
+                        'info'
+                    );
+                    speak('Here are the available commands.');
+                    addLog('📖 showed help', 'info');
+                    setStatus('help shown', 'idle');
+                    return;
+                }
+
+                // 7. scroll
+                if (lower === 'scroll down') { window.scrollBy(0, 300);
+                    setOutput('⬇️ scrolled down', 'success');
+                    speak('Scrolling down');
+                    addLog('⬇️ scrolled down', 'success'); return; }
+                if (lower === 'scroll up') { window.scrollBy(0, -300);
+                    setOutput('⬆️ scrolled up', 'success');
+                    speak('Scrolling up');
+                    addLog('⬆️ scrolled up', 'success'); return; }
+                if (lower === 'scroll top') { window.scrollTo(0, 0);
+                    setOutput('⬆️ scrolled to top', 'success');
+                    speak('Scrolled to top');
+                    addLog('⬆️ scrolled top', 'success'); return; }
+                if (lower === 'scroll bottom') { window.scrollTo(0, document.body.scrollHeight);
+                    setOutput('⬇️ scrolled to bottom', 'success');
+                    speak('Scrolled to bottom');
+                    addLog('⬇️ scrolled bottom', 'success'); return; }
+
+                // fallback
+                const msg = `🤔 unknown command: "${cmd}". Type "help" for commands.`;
+                setOutput(msg, 'error');
+                speak('I didn\'t understand that command');
+                addLog(`❌ unknown command: "${cmd}"`, 'error');
+                setStatus('unknown', 'idle');
+            }
+
+            // ---- helpers: fill, video, click ----
+            function fillFormField(fieldName, value) {
+                const selectors = [
+                    `input[name="${fieldName}"]`,
+                    `input[id="${fieldName}"]`,
+                    `input[placeholder*="${fieldName}" i]`,
+                    `textarea[name="${fieldName}"]`,
+                    `textarea[id="${fieldName}"]`,
+                    `#${fieldName}`,
+                    `[data-field="${fieldName}"]`
+                ];
+                let element = null;
+                for (const sel of selectors) {
+                    const el = document.querySelector(sel);
+                    if (el) { element = el; break; }
+                }
+                if (element) {
+                    element.value = value;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                    element.style.border = '1px solid #80b8a0';
+                    setTimeout(() => { element.style.border = ''; }, 2500);
+                    return { success: true };
+                }
+                const inputs = document.querySelectorAll('input[type="text"], input:not([type]), textarea');
+                if (inputs.length > 0) {
+                    inputs[0].value = value;
+                    inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                    return { success: true, message: `⚠️ filled first input with "${value}"` };
+                }
+                return { success: false, message: 'no form fields found' };
+            }
+
+            function controlVideo(action) {
+                const videos = document.querySelectorAll('video');
+                if (videos.length === 0) {
+                    return { success: false, message: '❌ no video found' };
+                }
+                videos.forEach(v => {
+                    if (action === 'play') v.play().catch(() => {});
+                    else v.pause();
+                });
+                return { success: true, message: `✅ ${action === 'play' ? 'resumed' : 'paused'} ${videos.length} video(s)` };
+            }
+
+            // ---- voice recognition (same as before) ----
+            function initVoice() {
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {
+                    voiceBtn.classList.add('disabled');
+                    voiceBtn.title = 'Voice not supported';
+                    isVoiceSupported = false;
+                    setStatus('Voice not supported', 'error');
+                    addLog('❌ voice not supported', 'error');
+                    return null;
+                }
+                isVoiceSupported = true;
+                try {
+                    const rec = new SR();
+                    rec.continuous = false;
+                    rec.interimResults = false;
+                    rec.lang = 'en-US';
+                    rec.maxAlternatives = 1;
+                    if (isAndroid) rec.continuous = false;
+
+                    rec.onstart = () => {
+                        isListening = true;
+                        voiceBtn.classList.add('listening');
+                        voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                        setStatus('🎤 listening...', 'listening');
+                        addLog('🎤 voice started', 'info');
+                        retryCount = 0;
+                    };
+                    rec.onerror = (event) => {
+                        isListening = false;
+                        voiceBtn.classList.remove('listening');
+                        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                        if (event.error === 'not-allowed') {
+                            setStatus('❌ mic denied', 'error');
+                            setOutput('❌ Please allow microphone access.', 'error');
+                            addLog('❌ mic denied', 'error');
+                            voiceBtn.classList.add('disabled');
+                        } else if (event.error === 'no-speech') {
+                            setStatus('no speech, try again', 'idle');
+                            setOutput('No speech detected. Tap mic and speak clearly.', 'info');
+                            addLog('⚠️ no speech', 'info');
+                            if (isAndroid && retryCount < MAX_RETRIES) {
+                                retryCount++;
+                                setTimeout(() => { if (!isListening) try { rec.start(); } catch (e) {} }, 1000);
+                            }
+                        } else if (event.error === 'aborted') {
+                            setStatus('cancelled', 'idle');
+                        } else {
+                            setStatus('voice error: ' + event.error, 'error');
+                            addLog('❌ voice error: ' + event.error, 'error');
+                        }
+                        if (event.error !== 'aborted') setStatus('ready (voice)', 'idle');
+                    };
+                    rec.onend = () => {
+                        isListening = false;
+                        voiceBtn.classList.remove('listening');
+                        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                        if (!rec._canceled) setStatus('ready (voice)', 'idle');
+                        rec._canceled = false;
+                    };
+                    rec.onresult = (event) => {
+                        const result = event.results[event.results.length - 1];
+                        if (result.isFinal) {
+                            const text = result[0].transcript.trim();
+                            if (text) {
+                                addLog(`🎤 voice: "${text}"`, 'info');
+                                commandInput.value = text;
+                                setOutput(`🎤 heard: "${text}"`, 'info');
+                                setTimeout(() => processCommand(text), 200);
+                            }
+                        }
+                    };
+                    return rec;
+                } catch (e) {
+                    isVoiceSupported = false;
+                    voiceBtn.classList.add('disabled');
+                    setStatus('voice unavailable', 'error');
+                    addLog('❌ voice init failed', 'error');
+                    return null;
+                }
+            }
+
+            function toggleVoice() {
+                if (!isVoiceSupported) {
+                    recognition = initVoice();
+                    if (!recognition) {
+                        setOutput('❌ Voice not supported. Use text.', 'error');
+                        return;
+                    }
+                }
+                if (!recognition) { recognition = initVoice(); if (!recognition) return; }
+                if (isListening) {
+                    try { recognition._canceled = true;
+                        recognition.stop(); } catch (e) {}
+                    isListening = false;
+                    voiceBtn.classList.remove('listening');
+                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    setStatus('stopped', 'idle');
+                    addLog('⏹️ voice stopped', 'info');
+                } else {
+                    try {
+                        recognition._canceled = false;
+                        recognition.start();
+                        setTimeout(() => {
+                            if (isListening) {
+                                try { recognition._canceled = true;
+                                    recognition.stop(); } catch (e) {}
+                                isListening = false;
+                                voiceBtn.classList.remove('listening');
+                                voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                                setStatus('ready (timeout)', 'idle');
+                                addLog('⏹️ voice timeout', 'info');
+                            }
+                        }, 8000);
+                    } catch (e) {
+                        setStatus('error starting voice', 'error');
+                        setOutput('⚠️ Could not start voice. Try again.', 'error');
+                        addLog('❌ voice start failed', 'error');
+                        voiceBtn.classList.remove('listening');
+                        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    }
+                }
+            }
+
+            // ---- UI event binding ----
+            function handleExecute() {
+                const text = commandInput.value.trim();
+                if (text) { processCommand(text);
+                    commandInput.select(); } else { setOutput('Type a command first.', 'info');
+                    commandInput.focus(); }
+            }
+            executeBtn.addEventListener('click', handleExecute);
+            commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault();
+                    handleExecute(); } });
+            voiceBtn.addEventListener('click', toggleVoice);
+
+            document.querySelectorAll('.quick-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cmd = btn.dataset.cmd;
+                    if (cmd) { commandInput.value = cmd;
+                        processCommand(cmd); }
+                });
+            });
+
+            // ---- init ----
+            setTimeout(() => {
+                recognition = initVoice();
+                if (recognition) {
+                    setStatus('ready — tap mic 🎤', 'idle');
+                    addLog('🎤 voice ready', 'info');
+                } else {
+                    setStatus('voice unavailable — use text', 'idle');
+                    addLog('💡 use text commands', 'info');
+                }
+            }, isAndroid ? 1000 : 300);
+
+            addLog('🤖 AgentLelosh online', 'info');
+            addLog('💡 try: "play Shape of You"', 'info');
+            setStatus('ready', 'idle');
+            setOutput('💬 AgentLelosh ready. Type or tap mic.', 'info');
+
+            // expose API
+            window.__agent = {
+                execute: processCommand,
+                play: playMusic,
+                speak: speak,
+                log: addLog,
+                voice: toggleVoice
+            };
+
+            // auto-run from URL ?cmd=...
+            const params = new URLSearchParams(window.location.search);
+            const cmdParam = params.get('cmd');
+            if (cmdParam) {
+                setTimeout(() => {
+                    commandInput.value = decodeURIComponent(cmdParam);
+                    processCommand(decodeURIComponent(cmdParam));
+                }, 800);
+            }
+
+            // pause voice on background
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isListening && recognition) {
+                    try { recognition._canceled = true;
+                        recognition.stop(); } catch (e) {}
+                    isListening = false;
+                    voiceBtn.classList.remove('listening');
+                    voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    setStatus('paused (background)', 'idle');
+                    addLog('⏸️ voice paused (background)', 'info');
+                }
+            });
+
+        })();
+    </script>
+
+</body>
+</html>
