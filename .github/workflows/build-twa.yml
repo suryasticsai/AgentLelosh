@@ -10,36 +10,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      # Pre-configured Bubblewrap Docker image with all dependencies
+      image: ghcr.io/googlechromelabs/bubblewrap:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install required build tools
-        run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Set ANDROID_HOME and PATH
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
-          echo "$ANDROID_HOME/tools/bin" >> $GITHUB_PATH
-
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Validate manifest.json
+      - name: Create manifest.json if missing
         run: |
           if [ ! -f manifest.json ]; then
-            echo "manifest.json not found! Creating one..."
             cat > manifest.json << 'EOF'
           {
             "name": "AgentLelosh",
@@ -60,18 +41,16 @@ jobs:
           }
           EOF
           fi
-          cat manifest.json
 
-      - name: Generate TWA project
+      - name: Initialize TWA project
         run: |
           bubblewrap init \
             --manifest manifest.json \
             --packageId com.suryasticsai.agentlelosch \
             --appName "AgentLelosh"
 
-      - name: Build APK (debug)
-        run: |
-          bubblewrap build
+      - name: Build APK
+        run: bubblewrap build
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
