@@ -55,7 +55,6 @@
             background-size: 24px 24px;
         }
 
-        /* ----- draggable window (glass‑morphism) ----- */
         .window {
             position: relative;
             width: 100%;
@@ -71,7 +70,6 @@
             touch-action: none;
         }
 
-        /* ----- title bar (draggable handle) ----- */
         .title-bar {
             display: flex;
             align-items: center;
@@ -121,7 +119,6 @@
             margin-left: 2px;
         }
 
-        /* window controls */
         .window-controls {
             display: flex;
             align-items: center;
@@ -160,22 +157,31 @@
             background: rgba(255, 255, 255, 0.12);
             color: #b7c9ff;
         }
+
+        /* Install button – always visible */
         .ctrl-btn.install-btn {
             background: #2a3f5e;
             color: #b0c8e8;
             font-size: 0.8rem;
             width: auto;
-            padding: 0 12px;
+            padding: 0 14px;
             gap: 6px;
-            display: none;
+            display: flex; /* always visible */
         }
         .ctrl-btn.install-btn:hover {
             background: #3a557a;
             color: #fff;
         }
-        .ctrl-btn.install-btn.show {
-            display: flex;
+        .ctrl-btn.install-btn.installed {
+            background: #2a5e3f;
+            color: #80c8a0;
+            cursor: default;
         }
+        .ctrl-btn.install-btn.installed:hover {
+            background: #2a5e3f;
+        }
+
+        /* Hide install button when already installed as PWA */
         @media (display-mode: standalone) {
             .ctrl-btn.install-btn {
                 display: none !important;
@@ -547,9 +553,9 @@
             </div>
 
             <div class="window-controls">
-                <!-- INSTALL BUTTON -->
+                <!-- INSTALL BUTTON – always visible -->
                 <button class="ctrl-btn install-btn" id="installBtn">
-                    <i class="fas fa-download"></i> Install
+                    <i class="fas fa-download"></i> <span id="installText">Install</span>
                 </button>
                 <!-- opacity toggle -->
                 <button class="ctrl-btn opacity-btn" id="opacityBtn" title="toggle transparency">
@@ -633,42 +639,78 @@
             const statusText = document.getElementById('statusText');
             const voiceIndicator = document.getElementById('voiceIndicator');
             const installBtn = document.getElementById('installBtn');
+            const installText = document.getElementById('installText');
             const opacityBtn = document.getElementById('opacityBtn');
             const collapseBtn = document.getElementById('collapseBtn');
             const closeBtn = document.getElementById('closeBtn');
 
             // ---- PWA Install ----
             let deferredPrompt = null;
+            let isInstalled = false;
+
+            // Check if already installed as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                isInstalled = true;
+                installBtn.classList.add('installed');
+                installText.textContent = 'Installed';
+                installBtn.disabled = true;
+            }
 
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                installBtn.classList.add('show');
-                installBtn.style.display = 'flex';
-            });
-
-            installBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const result = await deferredPrompt.userChoice;
-                    if (result.outcome === 'accepted') {
-                        addLog('✅ App installed!', 'success');
-                        installBtn.classList.remove('show');
-                        installBtn.style.display = 'none';
-                    } else {
-                        addLog('❌ Installation declined', 'error');
-                    }
-                    deferredPrompt = null;
-                } else {
-                    setOutput('📲 On Android: Tap the 3-dot menu → "Install app" or "Add to Home Screen"', 'info');
-                    addLog('📲 Use "Add to Home Screen" from browser menu', 'info');
+                // Update button text if not already installed
+                if (!isInstalled) {
+                    installText.textContent = 'Install';
+                    installBtn.classList.remove('installed');
+                    installBtn.disabled = false;
                 }
             });
 
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                installBtn.classList.remove('show');
-                installBtn.style.display = 'none';
-            }
+            // Also listen for appinstalled event
+            window.addEventListener('appinstalled', () => {
+                isInstalled = true;
+                installBtn.classList.add('installed');
+                installText.textContent = 'Installed';
+                installBtn.disabled = true;
+                addLog('✅ App installed successfully!', 'success');
+                setOutput('✅ AgentLelosh installed as a PWA!', 'success');
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (isInstalled) {
+                    setOutput('✅ Already installed as an app.', 'info');
+                    return;
+                }
+
+                if (deferredPrompt) {
+                    // Show the native install prompt
+                    installText.textContent = 'Installing...';
+                    installBtn.disabled = true;
+                    deferredPrompt.prompt();
+                    const result = await deferredPrompt.userChoice;
+                    if (result.outcome === 'accepted') {
+                        addLog('✅ User accepted install', 'success');
+                        setOutput('✅ Installing AgentLelosh...', 'success');
+                    } else {
+                        addLog('❌ User declined install', 'error');
+                        setOutput('❌ Installation declined.', 'error');
+                        installText.textContent = 'Install';
+                        installBtn.disabled = false;
+                    }
+                    deferredPrompt = null;
+                } else {
+                    // Fallback: show manual instructions
+                    setOutput(
+                        '📲 To install manually:\n' +
+                        '• On Android (Chrome): Tap the 3-dot menu → "Install app" or "Add to Home Screen"\n' +
+                        '• On Desktop (Chrome/Edge): Look for the install icon in the address bar\n' +
+                        '• Or use your browser\'s "Add to Home Screen" feature',
+                        'info'
+                    );
+                    addLog('📲 Manual install instructions shown', 'info');
+                }
+            });
 
             // ---- Service Worker Registration ----
             if ('serviceWorker' in navigator) {
