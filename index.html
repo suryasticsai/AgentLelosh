@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- PWA Manifest (inline) -->
+    <!-- PWA Manifest (external) -->
     <link rel="manifest" href="manifest.json" />
 
     <!-- Favicons (using your logos) -->
@@ -155,7 +155,7 @@
             width: auto;
             padding: 0 14px;
             gap: 6px;
-            display: flex; /* always visible */
+            display: flex;
         }
         .ctrl-btn.install-btn:hover {
             background: #3a557a;
@@ -170,7 +170,6 @@
             background: #2a5e3f;
         }
 
-        /* Hide install button when already installed as PWA */
         @media (display-mode: standalone) {
             .ctrl-btn.install-btn {
                 display: none !important;
@@ -287,11 +286,39 @@
             transform: scale(0.94);
         }
 
+        /* Download APK button (sits in quick-grid) */
+        .download-apk-btn {
+            background: #059669;
+            color: #fff;
+            border: none;
+            padding: 0.45rem 1rem;
+            border-radius: 40px;
+            font-size: 0.78rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .download-apk-btn:hover {
+            background: #047857;
+            color: #fff;
+            transform: scale(1.02);
+        }
+        .download-apk-btn:active {
+            transform: scale(0.95);
+        }
+
         .quick-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 20px;
+            align-items: center;
         }
         .quick-btn {
             padding: 0.45rem 1rem;
@@ -499,6 +526,10 @@
                 font-size: 0.7rem;
                 padding: 0.3rem 0.7rem;
             }
+            .download-apk-btn {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.7rem;
+            }
             .tagline p {
                 font-size: 0.85rem;
             }
@@ -542,7 +573,7 @@
             </div>
 
             <div class="window-controls">
-                <!-- INSTALL BUTTON – always visible -->
+                <!-- INSTALL BUTTON (PWA) -->
                 <button class="ctrl-btn install-btn" id="installBtn">
                     <i class="fas fa-download"></i> <span id="installText">Install</span>
                 </button>
@@ -585,6 +616,7 @@
                 <button class="btn btn-voice" id="voiceBtn"><i class="fas fa-microphone"></i></button>
             </div>
 
+            <!-- QUICK COMMANDS + DOWNLOAD APK BUTTON -->
             <div class="quick-grid">
                 <button class="quick-btn" data-cmd="play Shape of You"><i class="fas fa-music"></i> Shape of You</button>
                 <button class="quick-btn" data-cmd="play Billie Jean"><i class="fas fa-music"></i> Billie Jean</button>
@@ -593,6 +625,14 @@
                 <button class="quick-btn" data-cmd="fill email with demo@test.com"><i class="fas fa-pen"></i> Fill email</button>
                 <button class="quick-btn" data-cmd="open youtube"><i class="fas fa-globe"></i> YouTube</button>
                 <button class="quick-btn" data-cmd="help"><i class="fas fa-question-circle"></i> Help</button>
+
+                <!-- DOWNLOAD APK BUTTON (always visible) -->
+                <a href="https://github.com/suryasticsai/AgentLelosh/releases/latest/download/app-debug.apk"
+                   class="download-apk-btn"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <i class="fas fa-android"></i> Download APK
+                </a>
             </div>
 
             <div id="output">
@@ -637,7 +677,6 @@
             let deferredPrompt = null;
             let isInstalled = false;
 
-            // Check if already installed as PWA
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 isInstalled = true;
                 installBtn.classList.add('installed');
@@ -648,7 +687,6 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                // Update button text if not already installed
                 if (!isInstalled) {
                     installText.textContent = 'Install';
                     installBtn.classList.remove('installed');
@@ -656,7 +694,6 @@
                 }
             });
 
-            // Also listen for appinstalled event
             window.addEventListener('appinstalled', () => {
                 isInstalled = true;
                 installBtn.classList.add('installed');
@@ -673,7 +710,6 @@
                 }
 
                 if (deferredPrompt) {
-                    // Show the native install prompt
                     installText.textContent = 'Installing...';
                     installBtn.disabled = true;
                     deferredPrompt.prompt();
@@ -689,7 +725,6 @@
                     }
                     deferredPrompt = null;
                 } else {
-                    // Fallback: show manual instructions
                     setOutput(
                         '📲 To install manually:\n' +
                         '• On Android (Chrome): Tap the 3-dot menu → "Install app" or "Add to Home Screen"\n' +
