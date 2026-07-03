@@ -3,11 +3,11 @@ const CACHE = 'agentlelosch-v2';
 const ASSETS = [
   './',
   './index.html',
+  './manifest.json',
   './logo/logo-white.png',
   './logo/logo-black.png'
 ];
 
-// Install – cache assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE)
@@ -16,7 +16,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate – clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
@@ -27,7 +26,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch – serve from cache, fallback to network
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
