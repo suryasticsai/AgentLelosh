@@ -1,4 +1,4 @@
-name: Build APK from PWA
+name: Build TWA APK
 
 on:
   push:
@@ -20,33 +20,66 @@ jobs:
         with:
           node-version: 18
 
-      # Install Bubblewrap CLI (required by the action)
-      - name: Install Bubblewrap
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install required build tools
+        run: |
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Set ANDROID_HOME and PATH
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/tools/bin" >> $GITHUB_PATH
+
+      - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      # Generate Android project from manifest
-      - name: Generate Android project
+      - name: Validate manifest.json
+        run: |
+          if [ ! -f manifest.json ]; then
+            echo "manifest.json not found! Creating one..."
+            cat > manifest.json << 'EOF'
+          {
+            "name": "AgentLelosh",
+            "short_name": "AgentLelosh",
+            "description": "Your Personal Voice Agent",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#1e1e24",
+            "theme_color": "#1e1e24",
+            "icons": [
+              {
+                "src": "logo/logo-black.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+              }
+            ]
+          }
+          EOF
+          fi
+          cat manifest.json
+
+      - name: Generate TWA project
         run: |
           bubblewrap init \
             --manifest manifest.json \
             --packageId com.suryasticsai.agentlelosch \
             --appName "AgentLelosh"
 
-      # Build APK using the PWA to APK action
-      - name: Build APK
-        uses: sharadcodes/pwa-to-apk-action@v1.0.0
-        with:
-          project-root-folder: ./app
+      - name: Build APK (debug)
+        run: |
+          bubblewrap build
 
-      # Upload the APK
-      - name: Upload APK
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AgentLelosh
+          name: AgentLelosh-TWA
           path: app/build/outputs/apk/debug/app-debug.apk
 
-      # Upload to Release (if tag pushed)
-      - name: Upload to Release
+      - name: Upload to Release (if tag)
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
